@@ -1,0 +1,432 @@
+#include <iostream>
+#include <map>
+#include <fstream>
+#include <string>
+#include <stdio.h>      /* printf, scanf, puts, NULL */
+#include <stdlib.h>     /* srand, rand */
+#include <time.h>       /* time */
+
+
+using namespace std;
+
+class enrutador
+{
+public:
+    bool agregar_enlace(char nombre, int costo);
+    bool eliminar_enlace(char nombre);
+    bool modificar_enlace(char nombre, int costo);
+    void imprimir();
+    void eliminar();
+    void imprimir_costo();
+private:
+    map<char,int> router;
+    map<char,int>::iterator it; //Nos permite acceder a cada miembro de los miembros de router por medio de it.
+};
+
+
+
+class red{
+public:
+    void agregar_enrutador(char nombre);
+    void eliminar_enrutador(char nombre);
+    void imprimir_todo();
+    void imprimir_enrutador(char nombre);
+    void eliminar_todo();
+    void leer_txt(string name);
+    void agregar_enrutador_txt(string nombre);
+    void modificar_enrutador_txt(string linea);
+    int char2int(char caracter);
+    void imprimir_matriz_adyacencia();
+    void matriz_aleatoria();
+    void agregar_enrutador_aleatorio(char nombre, int i, int numero_routers);
+private:
+    map<char,enrutador> net;
+    map<char,enrutador>::iterator it;
+};
+
+
+int main()
+{
+    enrutador router;
+    red net;
+    red net2;
+    int a;
+    char name;
+    string nombre_texto;
+    //char inicio, fin;
+
+    while(true){
+        char punto;
+        cout << "Elije el punto que quieres hacer (Del A al E): ";
+        cin>> punto;
+
+        switch(punto){
+
+        case 'A':
+            cout <<"Escogiste el A"<<endl;
+            cout<<"Presiona 1 para agregar enlace, 2 para eliminar enlace, 3 para modificar enlace, 4 para imprimir todo: ";
+            cin >>a;
+            switch (a){
+            case 1:
+                cout << "Ingrese nombre y costo del enlace: ";
+                cin >> name >> a;
+                if(!router.agregar_enlace(name,a)) cout << "Error al agregar el enlace. Este ya existe."<<endl;
+                break;
+            case 2:
+                cout <<"Ingrese nombre: ";
+                cin>> name;
+                if(!router.eliminar_enlace(name)) cout<< "Error al eliminar el enlace. Este no existe."<<endl;
+                break;
+            case 3:
+                cout << "Ingrese nombre y costo del enlace a modificar: ";
+                cin >> name >>a;
+                if(!router.modificar_enlace(name,a)) cout << "Error al modificar el enlace. Este no existe."<<endl;
+                break;
+            case 4:
+                router.imprimir();
+                break;
+            default:
+                break;
+            }
+            break;
+        case 'B':
+            cout <<"Escogiste el B"<<endl;
+            cout << "Presiona 1 para agregar enlace, 2  para eliminar enlace, 3 para imprimir enrutador y 4 para imprimir toda la red, 5 para configurar la red por la del texto .txt:  ";
+            cin >> a;
+            switch (a){
+            case 1:
+                cout << "Ingrese el nombre del nuevo enrutador: ";
+                cin >> name;
+                net.agregar_enrutador(name);
+                break;
+            case 2:
+                cout << "Ingrese el nombre del enrutador a eliminar: ";
+                cin >> name;
+                net.eliminar_enrutador(name);
+                break;
+            case 3:
+                cout << "Ingrese el nombre del enrutador a imprimir: ";
+                cin >> name;
+                net.imprimir_enrutador(name);
+                break;
+            case 4:
+                net.imprimir_todo();
+                break;
+            case 5:
+                cout<<"Dame el nombre del archivo de texto: ";
+                cin>>nombre_texto;
+                net.eliminar_todo();
+                net.leer_txt(nombre_texto);
+                break;
+            default:
+                break;
+            }
+            break;
+        case 'C':
+            cout <<"Escogiste el C. Se va a imprimir la MATRIZ DE ADYACENCIA"<<endl;
+            net.imprimir_matriz_adyacencia();
+            break;
+        case 'D':
+//            cout <<"Escogiste el D"<<endl;
+//            cout<< "Dame el router de inicial y el router final: "<<endl;
+//            cin>>inicio >> fin;
+//            net2=net;
+//            net.mejor_ruta(inicio, fin);
+//            net=net2;
+            break;
+        case 'E':
+            cout <<"Escogiste el E"<<endl;
+            net.eliminar_todo();
+            net.matriz_aleatoria();
+            break;
+        }
+
+    }
+    return 0;
+}
+
+
+
+
+//Funciones para el enrutador
+
+bool enrutador::agregar_enlace(char nombre, int costo)
+{
+    bool st=false;
+    if(router.find(nombre)==router.end()){
+        router.insert(pair<char,int>(nombre,costo));
+        st=true;
+    }
+    return st;
+}
+
+
+bool enrutador::eliminar_enlace(char nombre)
+{
+    bool st=false;
+    if(router.find(nombre)!=router.end()){
+        router.erase(nombre);
+        st=true;
+    }
+    return st;
+}
+
+
+bool enrutador::modificar_enlace(char nombre, int costo)
+{
+    bool st=false;
+    if(router.find(nombre)!=router.end()){
+        router[nombre]=costo;
+        st=true;
+    }
+    return st;
+}
+
+
+void enrutador::imprimir()
+{
+    for(it=router.begin();it!=router.end();it++)    cout<<it->first << '\t' << it->second <<endl;
+}
+
+
+void enrutador::imprimir_costo()
+{
+    for(it=router.begin();it!=router.end();it++)    cout<<it->second << '\t';
+}
+
+
+//Funciones para el de red
+void red::agregar_enrutador(char nombre)
+{
+    enrutador router;
+    char name;
+    int valor;
+    if(net.find(nombre)==net.end()){
+        router.agregar_enlace(nombre,0);
+        for(it=net.begin();it!=net.end();it++){
+            router.agregar_enlace(it->first,-1);        //Agrega vertical/
+            it->second.agregar_enlace(nombre,-1);       //Agrega horizontal/
+        }
+        do{
+            cout << "Ingrese el nombre del nodo con el que se va a enlazar el nodo " <<  nombre << ". Presiona % para no agregar ningun nombre."<< endl;
+            cin >> name;
+            if(name!='%'){
+                cout << "Ingrese el costo del enlace: ";
+                cin >> valor;
+                if(!router.modificar_enlace(name,valor))    cout << "El nodo ingresado no existe" << endl;
+                else net[name].modificar_enlace(nombre,valor);
+            }
+        }while(name!='%');  //do while para ingresar todos los nodos que se quieran
+        net.insert(pair<char,enrutador>(nombre,router));
+    }
+}
+
+
+void red::eliminar_enrutador(char nombre)
+{
+    enrutador router;
+    if(net.find(nombre)!=net.end()){
+        //router.eliminar_enlace(nombre);
+        for(it=net.begin();it!=net.end();it++){
+            //router.eliminar_enlace(it->first);
+            it->second.eliminar_enlace(nombre);
+        }
+        net.erase(nombre);
+    }
+}
+
+
+void red::imprimir_enrutador(char nombre)
+{
+    enrutador router;
+    if(net.find(nombre)!=net.end()){
+       // cout << nombre << '\t';
+        net[nombre].imprimir();
+        cout << endl;
+    }
+    else cout << "El enrutador no existe" << endl;
+}
+
+
+void red::imprimir_todo()
+{
+    enrutador router;
+    for(it=net.begin();it!=net.end();it++){
+        cout <<'\n'<< it->first<<'\n';
+        net[it->first].imprimir();
+        }
+        cout << endl;
+}
+
+
+void red::eliminar_todo()
+{
+    enrutador router;
+    for(it=net.begin();it!=net.end();it++){
+        net.erase(it->first);
+        }
+        cout << endl;
+}
+
+
+void red::leer_txt(string name)
+{
+    string data, data2;
+    fstream k(name, fstream::in);	//para leerlo
+    if(k.is_open()){
+        while(!k.eof()){
+            getline(k, data2);
+            //data.append("\n\r");
+            //data.append(data2);
+            //cout<<data2<<endl;
+            agregar_enrutador_txt(data2);
+            //modificar_enrutador_txt(data2);
+            //cout<<"Aquí empieza";
+            cout<<data2<<endl;
+            //cout<<"    "<<endl;
+        }
+    }
+    else cout<<"El archivo de texto no existe" <<endl;
+}
+
+
+void red::agregar_enrutador_txt(string linea)
+{
+    enrutador router;
+    char nombre=linea[0];
+    char name=linea[2];
+    int valor=0;
+    int entero=0;
+    int entero2=0;
+    for(int j=4; j<linea.length(); j++){
+        entero=char2int(linea[j]);
+        entero2=entero2*10+entero;
+    }
+    valor=entero2;
+
+    //Se agrega el valor de 0 para ambos routers
+    net[nombre].agregar_enlace(nombre,0);
+    net[name].agregar_enlace(name,0);
+
+    for(it=net.begin();it!=net.end();it++){
+      //  router.agregar_enlace(it->first,-1);
+        //Se agregan los -1 para ambos routers
+        net[nombre].agregar_enlace(name,-1);
+        it->second.agregar_enlace(nombre,-1);
+        //Se agregan para los demás routers existentes
+        net[nombre].agregar_enlace(it->first,-1);
+        //it->second.agregar_enlace(it->first,-1);
+        net[name].agregar_enlace(it->first,-1);
+        //it->second.agregar_enlace(it->first,-1);
+    }
+
+    net[nombre].modificar_enlace(name,valor);
+    net[name].modificar_enlace(nombre,valor);
+
+    net.insert(pair<char,enrutador>(nombre,router));
+}
+
+
+void red::modificar_enrutador_txt(string linea)
+{
+    enrutador router;
+    char nombre=linea[0];
+    char name=linea[2];
+    int valor=0;
+    int entero=0;
+    for(int j=4; j<linea.length(); j++){
+        entero=char2int(linea[j]);
+        valor=valor*10+entero;
+    }
+
+    net[nombre].modificar_enlace(name,valor);
+    net[name].modificar_enlace(nombre,valor);
+}
+
+
+int red::char2int(char caracter)
+{
+    int entero=0;
+    entero=caracter-48;
+    return entero;
+}
+
+
+void red::imprimir_matriz_adyacencia()
+{
+    for(it=net.begin();it!=net.end();it++){
+        cout << '\t' << it->first;
+        //net[it->first].imprimir();
+        }
+    for(it=net.begin();it!=net.end();it++){
+        cout<<endl;
+        cout << it->first<< '\t' ;
+        net[it->first].imprimir_costo();
+        }
+    cout<<endl;
+}
+
+
+void red::matriz_aleatoria()
+{
+    char nombre=0;
+    char numero_nombre_router=0;
+    int numero_routers=0;
+    srand (time(NULL));
+    numero_routers= rand() % 20 + 2;    //número aleatorio entre 2 y 21
+    //numero_routers=7;
+
+    cout<<"Numero de routers: "<< numero_routers <<endl;
+
+    for(int i=0; i<numero_routers ; i++){
+        numero_nombre_router=65+i;      //Empieza desde 'A'=65
+        nombre=numero_nombre_router;
+        agregar_enrutador_aleatorio(nombre, i, numero_routers); //Se le entrega el nombre, el i=número de router en que vamos-1, numero de routers en total
+    }
+}
+
+void red::agregar_enrutador_aleatorio(char nombre, int i, int numero_routers)
+{
+    enrutador router;
+    char name;
+    int valores=0;
+    bool repetido=0;
+    int l=0;
+
+    net[nombre].agregar_enlace(nombre,0);
+
+    for(it=net.begin();it!=net.end();it++){         //Se llenan todos los valores de las red del router con -1
+        net[nombre].agregar_enlace(it->first,-1);   //No toma el del mismo nombre, porque ya existe. Se creó hace tres renglones con net[nombre].agregar_enlace(nombre,0);
+        it->second.agregar_enlace(nombre,-1);
+    }
+
+    //Variables para el else
+    int numero_rutas=0;
+    int rutas_maximas;
+    int maximo_valor_random=0;
+
+    if(numero_routers>1){
+        rutas_maximas=i+1;
+        numero_rutas= rand() % rutas_maximas + 1;   //Esta define la cantidad de rutas que van a estar conectadas con el router en que estamos
+
+        do{
+
+            if(i==0){
+                name=66;
+            }
+            else{
+                maximo_valor_random=rand() % i; //rand()%i= va de 0 a i-1. rand para eligir el nombre del router con el que se va a hacer un enlace. Su nombre debe llegar máximo hasta antes del router actual.
+                name=65+maximo_valor_random; //El nombre del router para crear la red debe estar entre A y antes del nombre del router actual. Ej: Si se está en D, i será de 3, por lo que va desde maximo_valor_random=0 hasta maximo_valor_random=2, o sea desde A hasta C.
+            }
+
+            if(numero_rutas>0){   //Siempre y cuando no se hayan completado el número de rutas.
+
+                valores= rand() % 100 + 1;  //Elije el costo de la ruta. Va de 0 a 99.
+                net[nombre].modificar_enlace(name,valores); //Modifica en la red de nuestro router.
+                net[name].modificar_enlace(nombre,valores); //Modifica en la red del router aleatorio.
+                numero_rutas--;
+            }
+        }while(numero_rutas>0);
+    }
+    net.insert(pair<char,enrutador>(nombre,router));
+}
